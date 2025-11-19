@@ -1,0 +1,27 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.10-alpine
+    ports:
+      - 9000:9000
+      - 8123:8123
+    volumes:
+      - trading_clickhouse_data:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_USER=admin
+      - CLICKHOUSE_PASSWORD=admin
+    networks:
+      - flying-trading-network
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--query", "SELECT 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  trading_clickhouse_data:
+
+
+networks:
+  flying-trading-network:
+    driver: bridge
