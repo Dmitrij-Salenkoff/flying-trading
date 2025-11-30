@@ -1,7 +1,7 @@
 import logging
 import sys
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 
 def setup_logging(
@@ -11,12 +11,12 @@ def setup_logging(
 ) -> logging.Logger:
     """
     Настройка логирования для приложения.
-    
+
     Args:
         log_level: Уровень логирования (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_file: Имя файла для логов (если None, логи только в консоль)
         log_dir: Директория для логов
-    
+
     Returns:
         Настроенный logger
     """
@@ -62,12 +62,11 @@ def setup_logging(
 def get_logger(name: str) -> logging.Logger:
     """
     Получить logger с указанным именем.
-    
+
     Args:
         name: Имя logger (обычно __name__ модуля)
-    
+
     Returns:
         Logger
     """
     return logging.getLogger(name)
-

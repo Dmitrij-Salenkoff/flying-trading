@@ -1,34 +1,35 @@
 import os
 import time
 
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
+from dotenv import load_dotenv
 from pybit.unified_trading import HTTP
 
-from flying_trading.train import add_features, FEATURE_COLS
-from dotenv import load_dotenv
+from flying_trading.train import FEATURE_COLS, add_features
 
 load_dotenv()
 
 TESTNET = False  # для безопасности лучше начинать с True
 SYMBOL = "SOLUSDT"
 CATEGORY = "linear"
-INTERVAL = "1"      # тот же, что в тренинге
+INTERVAL = "1"  # тот же, что в тренинге
 KLINE_LIMIT = 1000  # сколько последних свечей брать
 POSITION_MODE = "hedge"  # мы явно работаем в hedge-режиме
 
 MODEL_PATH = f"models/{SYMBOL}_{INTERVAL}m_logreg.pkl"
 
 EDGE_THRESHOLD = 0.05  # порог сигнала
-TRADE_QTY = 0.1        # базовый размер по модулю
-MAX_POSITION = 5       # ограничение net-позиции
-SLEEP_SECONDS = 10     # частота проверки (для 1m достаточно)
+TRADE_QTY = 0.1  # базовый размер по модулю
+MAX_POSITION = 5  # ограничение net-позиции
+SLEEP_SECONDS = 10  # частота проверки (для 1m достаточно)
 
 
 # ==============================
 #   Загрузка последних свечей
 # ==============================
+
 
 def fetch_recent_klines(
     session: HTTP, symbol: str, category: str, interval: str, limit: int
@@ -67,6 +68,7 @@ def fetch_recent_klines(
 # ==============================
 #    Состояние позиций + PnL
 # ==============================
+
 
 def get_position_state(session: HTTP, symbol: str):
     """
@@ -140,6 +142,7 @@ def get_position_state(session: HTTP, symbol: str):
 #   Отправка маркет-ордеров
 # ==============================
 
+
 def place_market_order(
     session: HTTP,
     symbol: str,
@@ -159,14 +162,14 @@ def place_market_order(
     if qty <= 0:
         return
 
-    kwargs = dict(
-        category=CATEGORY,
-        symbol=symbol,
-        side=side,
-        orderType="Market",
-        qty=str(qty),
-        reduceOnly=reduce_only,
-    )
+    kwargs = {
+        "category": CATEGORY,
+        "symbol": symbol,
+        "side": side,
+        "orderType": "Market",
+        "qty": str(qty),
+        "reduceOnly": reduce_only,
+    }
 
     if POSITION_MODE == "hedge":
         if position_idx is None:
@@ -185,6 +188,7 @@ def place_market_order(
 #      Логика принятия решения
 # ==============================
 
+
 def decide_and_trade(session: HTTP, state: dict, edge: float):
     """
     state: результат get_position_state
@@ -193,7 +197,7 @@ def decide_and_trade(session: HTTP, state: dict, edge: float):
 
     long_size = state["long_size"]
     short_size = state["short_size"]
-    net_pos = state["net_pos"]
+    # net_pos = state["net_pos"]
 
     # желаемая net-позиция по сигналу
     if edge > EDGE_THRESHOLD:
@@ -218,10 +222,7 @@ def decide_and_trade(session: HTTP, state: dict, edge: float):
         target_short = 0.0
 
     # если и так близко к целям — ничего не делаем
-    if (
-        abs(long_size - target_long) < 1e-6
-        and abs(short_size - target_short) < 1e-6
-    ):
+    if abs(long_size - target_long) < 1e-6 and abs(short_size - target_short) < 1e-6:
         print(
             f"[TRADE] keep positions: long={long_size}, short={short_size}, edge={edge:.3f}"
         )
@@ -235,7 +236,9 @@ def decide_and_trade(session: HTTP, state: dict, edge: float):
     # 1) сначала уменьшаем лишний long (Sell по idx=1, reduceOnly=True)
     if long_size > target_long + 1e-8:
         reduce_qty = long_size - target_long
-        print(f"[ORDER] close/reduce LONG: Sell {reduce_qty} {SYMBOL} (idx=1, reduceOnly)")
+        print(
+            f"[ORDER] close/reduce LONG: Sell {reduce_qty} {SYMBOL} (idx=1, reduceOnly)"
+        )
         try:
             place_market_order(
                 session,
@@ -251,7 +254,9 @@ def decide_and_trade(session: HTTP, state: dict, edge: float):
     # 2) потом уменьшаем лишний short (Buy по idx=2, reduceOnly=True)
     if short_size > target_short + 1e-8:
         reduce_qty = short_size - target_short
-        print(f"[ORDER] close/reduce SHORT: Buy {reduce_qty} {SYMBOL} (idx=2, reduceOnly)")
+        print(
+            f"[ORDER] close/reduce SHORT: Buy {reduce_qty} {SYMBOL} (idx=2, reduceOnly)"
+        )
         try:
             place_market_order(
                 session,
@@ -307,6 +312,7 @@ def decide_and_trade(session: HTTP, state: dict, edge: float):
 # ==============================
 #              MAIN
 # ==============================
+
 
 def main():
     # 1. Грузим модель

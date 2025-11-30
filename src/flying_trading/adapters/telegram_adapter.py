@@ -1,4 +1,5 @@
 import requests
+
 from flying_trading.logger import get_logger
 
 logger = get_logger(__name__)

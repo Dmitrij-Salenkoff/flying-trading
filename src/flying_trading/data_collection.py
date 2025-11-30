@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+
 from clickhouse_driver import Client
 from pybit.unified_trading import HTTP
+
 from .config import config
 
 

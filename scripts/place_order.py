@@ -1,4 +1,5 @@
 from pybit.unified_trading import HTTP
+
 from flying_trading.config import config
 
 price = "137"

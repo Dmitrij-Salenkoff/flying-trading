@@ -1,17 +1,14 @@
-from datetime import datetime, timezone
-from typing import List, Tuple
+import os
+from datetime import UTC, datetime, timedelta
 
+import joblib
 import numpy as np
 import pandas as pd
 from pybit.unified_trading import HTTP
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-import os
-from datetime import timedelta
-
-import joblib
+from sklearn.preprocessing import StandardScaler
 
 FEATURE_COLS = [
     "return_1",
@@ -51,7 +48,7 @@ def parse_utc(date_str: str) -> datetime:
     Преобразует строку 'YYYY-MM-DD HH:MM' в datetime UTC.
     """
     dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
-    return dt.replace(tzinfo=timezone.utc)
+    return dt.replace(tzinfo=UTC)
 
 
 def interval_to_ms(interval: str) -> int:
@@ -100,8 +97,8 @@ def fetch_klines_range(
     """
 
     # убеждаемся, что всё в UTC
-    start_dt = start_dt.astimezone(timezone.utc)
-    end_dt = end_dt.astimezone(timezone.utc)
+    start_dt = start_dt.astimezone(UTC)
+    end_dt = end_dt.astimezone(UTC)
 
     interval_ms = interval_to_ms(interval)
 
@@ -112,7 +109,7 @@ def fetch_klines_range(
         start_ms = int(start_dt_inner.timestamp() * 1000)
         end_ms = int(end_dt_inner.timestamp() * 1000)
 
-        all_rows: List[List[str]] = []
+        all_rows: list[list[str]] = []
         current_start = start_ms
 
         while current_start < end_ms:
@@ -153,7 +150,7 @@ def fetch_klines_range(
         # убираем дубли и приводим к DataFrame
         all_rows_sorted = sorted(all_rows, key=lambda r: int(r[0]))
         seen = set()
-        unique_rows: List[List[str]] = []
+        unique_rows: list[list[str]] = []
         for row in all_rows_sorted:
             ts = int(row[0])
             if ts in seen:
@@ -186,7 +183,7 @@ def fetch_klines_range(
     from datetime import date
 
     def day_start(d: date) -> datetime:
-        return datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
+        return datetime(d.year, d.month, d.day, tzinfo=UTC)
 
     def day_end(d: date) -> datetime:
         return day_start(d) + timedelta(days=1)
@@ -343,7 +340,7 @@ def backtest_directional(
     edge: np.ndarray,
     taker_fee: float = TAKER_FEE,
     edge_threshold: float = EDGE_THRESHOLD,
-) -> Tuple[pd.DataFrame, float]:
+) -> tuple[pd.DataFrame, float]:
     """
     Очень грубый бэктест:
     - если edge > edge_threshold -> long на горизонте H, pnl = ret_horizon - 2*fee
@@ -414,7 +411,7 @@ def main():
     )
 
     split_idx = X_train.shape[0]
-    df_train = df_all.iloc[:split_idx]
+    # df_train = df_all.iloc[:split_idx]
     df_test = df_all.iloc[split_idx:]
 
     print("Train size:", X_train.shape, "Test size:", X_test.shape)
@@ -448,6 +445,7 @@ def main():
         edge = probas[:, idx_up] - probas[:, idx_down]
 
         import numpy as np
+
         print("edge stats on test:")
         print("min :", edge.min())
         print("max :", edge.max())

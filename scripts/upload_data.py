@@ -9,6 +9,7 @@ Usage:
 
 import sys
 from datetime import datetime
+
 from clickhouse_driver import Client
 from pybit.unified_trading import HTTP
 

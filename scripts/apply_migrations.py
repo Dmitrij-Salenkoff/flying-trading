@@ -6,8 +6,10 @@ Usage: python scripts/apply_migrations.py
 
 import sys
 from pathlib import Path
+
 from clickhouse_driver import Client
 from clickhouse_driver.errors import Error as ClickHouseError
+
 from flying_trading.config import config
 
 # Add project root to path
@@ -41,7 +43,7 @@ def apply_migrations():
     for migration_file in migration_files:
         print(f"\nApplying migration: {migration_file.name}")
         try:
-            with open(migration_file, "r", encoding="utf-8") as f:
+            with open(migration_file, encoding="utf-8") as f:
                 sql_content = f.read()
 
             # Split SQL by semicolon and filter out empty/comment-only statements

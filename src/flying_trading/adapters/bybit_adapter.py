@@ -1,10 +1,11 @@
-from pybit.unified_trading import HTTP
-from flying_trading.domain.interfaces import IExchange
-from flying_trading.domain.models import Candle, Position
 import math
-from flying_trading.config import config
 from pprint import pprint
-from flying_trading.domain.models import Side
+
+from pybit.unified_trading import HTTP
+
+from flying_trading.config import config
+from flying_trading.domain.interfaces import IExchange
+from flying_trading.domain.models import Candle, Position, Side
 from flying_trading.logger import get_logger
 
 logger = get_logger(__name__)
@@ -90,7 +91,9 @@ class BybitAdapter(IExchange):
     def place_market_order(self, symbol, side, qty, sl):
         qty_str = f"{qty:.{self.qty_precision[symbol]}f}"
         sl_str = f"{sl:.{self.price_precision[symbol]}f}"
-        logger.info(f"Placing {side} market order: {symbol}, qty={qty_str}, sl={sl_str}")
+        logger.info(
+            f"Placing {side} market order: {symbol}, qty={qty_str}, sl={sl_str}"
+        )
         try:
             result = self.session.place_order(
                 category=CATEGORY,

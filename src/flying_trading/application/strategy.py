@@ -1,6 +1,7 @@
 import time
-from flying_trading.domain.models import StrategyParams, Signal, Candle, Side
+
 from flying_trading.adapters.indicator_service import IndicatorService
+from flying_trading.domain.models import Candle, Side, Signal, StrategyParams
 from flying_trading.logger import get_logger
 
 logger = get_logger(__name__)
@@ -129,7 +130,6 @@ class TrendStrategyLogic:
         l_rsi = data["rsi"] < self.params.rsi_lower
         long_cond = l_trend and l_pattern and l_candle_green and l_rsi
 
-                
         s_trend = current_candle.close < h1_ema_trend
         s_pattern = (prev_candle.close > data["bb_upper"]) and (
             current_candle.close < data["bb_upper"]

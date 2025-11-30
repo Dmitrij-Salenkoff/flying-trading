@@ -1,12 +1,12 @@
 # domain/interfaces.py
 from abc import ABC, abstractmethod
-from typing import List
+
 from .models import Candle, Position, Side
 
 
 class IExchange(ABC):
     @abstractmethod
-    def get_history(self, symbol: str, interval: str, limit: int) -> List[Candle]: ...
+    def get_history(self, symbol: str, interval: str, limit: int) -> list[Candle]: ...
 
     @abstractmethod
     def get_current_price(self, symbol: str) -> float: ...

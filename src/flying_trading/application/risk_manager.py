@@ -21,7 +21,7 @@ class RiskManager:
 
         pos_usdt = risk_amount / dist_pct
         qty = pos_usdt / entry_price
-        
+
         self.logger.debug(
             f"Qty calculation: balance={balance:.2f}, risk={risk_amount:.2f}, "
             f"dist_pct={dist_pct:.4f}, qty={qty:.4f}"

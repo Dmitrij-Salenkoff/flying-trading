@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Tuple, Dict, Any, List
+from typing import Any
 
 import pandas as pd
 from pybit.unified_trading import HTTP
@@ -167,11 +167,11 @@ class Trade:
 def backtest_mean_reversion(
     df: pd.DataFrame,
     params: StrategyParams,
-) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     """
     df: с колонками timestamp, open, high, low, close, volume, rsi, macd_hist, macd_hist_prev
     """
-    trades: List[Trade] = []
+    trades: list[Trade] = []
 
     position = 0  # 0 = flat, +1 = long, -1 = short
     entry_price = None
@@ -327,7 +327,7 @@ def compute_stats(
     trades_df: pd.DataFrame,
     equity_df: pd.DataFrame,
     params: StrategyParams,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if trades_df.empty:
         return {
             "total_trades": 0,
@@ -394,7 +394,7 @@ if __name__ == "__main__":
 
     # Период бэктеста: последние X дней
     days_back = 30
-    
+
     end = pd.Timestamp.utcnow().floor("min")
     start = end - pd.Timedelta(days=days_back)
 

@@ -1,17 +1,16 @@
-import threading
 import time
-from pybit.unified_trading import WebSocket
-import click
 
-from flying_trading.domain.models import StrategyParams, Candle, Side
-from flying_trading.domain.interfaces import IExchange, INotifier
-from flying_trading.application.strategy import TrendStrategyLogic
-from flying_trading.application.risk_manager import RiskManager
+import click
+from pybit.unified_trading import WebSocket
+
 from flying_trading.adapters.bybit_adapter import BybitAdapter
 from flying_trading.adapters.telegram_adapter import TelegramAdapter
-
+from flying_trading.application.risk_manager import RiskManager
+from flying_trading.application.strategy import TrendStrategyLogic
 from flying_trading.config import config
-from flying_trading.logger import setup_logging, get_logger
+from flying_trading.domain.interfaces import IExchange, INotifier
+from flying_trading.domain.models import Candle, Side, StrategyParams
+from flying_trading.logger import get_logger, setup_logging
 
 logger = get_logger(__name__)
 

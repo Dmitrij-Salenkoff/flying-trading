@@ -3,18 +3,17 @@
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Dict, Any, List, Optional
 from pathlib import Path
+from typing import Any
 
-import pandas as pd
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pandas as pd
 from pybit.unified_trading import HTTP
 
-from flying_trading.config import config
-from flying_trading.domain.models import StrategyParams, Candle, Side
 from flying_trading.application.strategy import TrendStrategyLogic
-
+from flying_trading.config import config
+from flying_trading.domain.models import Candle, Side, StrategyParams
 
 # ======================= ЗАГРУЗКА ДАННЫХ =======================
 
@@ -123,7 +122,7 @@ def backtest_trend_strategy(
     fee_rate: float = 0.001,  # 0.1% за одну сторону
     risk_per_trade: float = 0.01,  # 1% риска на сделку
     verbose: bool = False,  # Выводить диагностику
-) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     """
     Бэктест для TrendStrategyLogic.
 
@@ -140,9 +139,9 @@ def backtest_trend_strategy(
         stats: Словарь со статистикой
     """
     strategy = TrendStrategyLogic(params)
-    trades: List[Trade] = []
+    trades: list[Trade] = []
 
-    position: Optional[Position] = None
+    position: Position | None = None
     equity = start_equity
     equity_curve = [equity]
 
@@ -159,7 +158,7 @@ def backtest_trend_strategy(
     }
 
     # Конвертируем DataFrame в список Candle для стратегии
-    candles_list: List[Candle] = []
+    candles_list: list[Candle] = []
 
     for i in range(total_bars):
         row = df.iloc[i]
@@ -440,7 +439,7 @@ def backtest_trend_strategy(
 
 def compute_stats(
     trades_df: pd.DataFrame, equity_df: pd.DataFrame, start_equity: float
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Вычисляет статистику бэктеста."""
     if trades_df.empty:
         return {
@@ -513,7 +512,7 @@ def plot_backtest_results(
     df: pd.DataFrame,
     trades_df: pd.DataFrame,
     equity_df: pd.DataFrame,
-    stats: Dict[str, Any],
+    stats: dict[str, Any],
     symbol: str,
     interval: str,
     output_dir: str = ".",

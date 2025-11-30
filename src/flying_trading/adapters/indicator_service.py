@@ -1,6 +1,7 @@
 import pandas as pd
-from flying_trading.domain.models import Candle, StrategyParams
 import pandas_ta as ta  # noqa: F401
+
+from flying_trading.domain.models import Candle, StrategyParams
 
 
 class IndicatorService:
@@ -38,7 +39,7 @@ class IndicatorService:
         std = df["close"].rolling(window=params.bb_period).std()
         df["bb_upper"] = sma + (std * params.bb_std)
         df["bb_lower"] = sma - (std * params.bb_std)
-        
+
         # ATR
         prev_close = df["close"].shift(1)
         tr = pd.concat(
