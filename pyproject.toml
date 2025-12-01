@@ -33,6 +33,8 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "dbt-clickhouse>=1.9.6",
+    "dbt-core>=1.10.15",
     "ipykernel>=7.1.0",
     "pre-commit>=4.0.1",
     "pytest>=9.0.1",
@@ -59,3 +61,8 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["flying_trading"]
+
+[tool.uv.workspace]
+members = [
+    "clickhouse",
+]
