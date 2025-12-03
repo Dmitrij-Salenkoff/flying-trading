@@ -1,0 +1,51 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: dbt  # Database name in StarRocks
+    tables:
+      - name: bybit_ohlcv_1m
+        description: "1-minute OHLCV candles from Bybit exchange"
+        columns:
+          - name: symbol
+            description: "Trading pair symbol (e.g., BTCUSDT)"
+          - name: event_time
+            description: "Candle start time"
+          - name: open_price
+            description: "Open price"
+          - name: high_price
+            description: "High price"
+          - name: low_price
+            description: "Low price"
+          - name: close_price
+            description: "Close price"
+          - name: volume
+            description: "Volume in base currency"
+          - name: turnover
+            description: "Turnover in quote currency"
+
+models:
+  - name: ohlcv_5m
+    description: "5-minute OHLCV candles aggregated from 1-minute data"
+    columns:
+      - name: symbol
+        description: "Trading pair symbol"
+        tests:
+          - not_null
+      - name: event_time
+        description: "5-minute candle start time"
+        tests:
+          - not_null
+      - name: open_price
+        description: "Open price (first price in 5-min window)"
+      - name: high_price
+        description: "High price (max of all highs in window)"
+      - name: low_price
+        description: "Low price (min of all lows in window)"
+      - name: close_price
+        description: "Close price (last price in 5-min window)"
+      - name: volume
+        description: "Total volume in base currency"
+      - name: turnover
+        description: "Total turnover in quote currency"
+

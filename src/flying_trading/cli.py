@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timedelta
 
 import click
 from pybit.unified_trading import WebSocket
@@ -141,13 +142,20 @@ class TradingBot:
             raise
 
 
-@click.command()
+@click.group()
+def cli():
+    """Flying Trading CLI - Trading bot and data management tools."""
+    pass
+
+
+@cli.command()
 @click.option("--symbol", default="SOLUSDT", help="Trading symbol (e.g., SOLUSDT)")
 @click.option(
     "--log-level", default="INFO", help="Logging level (DEBUG, INFO, WARNING, ERROR)"
 )
 @click.option("--log-file", default=None, help="Log file name (optional)")
-def cli(symbol: str, log_level: str, log_file: str | None):
+def run(symbol: str, log_level: str, log_file: str | None):
+    """Run the trading bot."""
     # Настройка логирования
     setup_logging(log_level=log_level, log_file=log_file)
     logger = get_logger(__name__)
@@ -176,6 +184,125 @@ def cli(symbol: str, log_level: str, log_file: str | None):
     except Exception as e:
         logger.critical(f"Fatal error: {e}", exc_info=True)
         raise
+
+
+@cli.command()
+@click.argument("symbol")
+@click.argument("start_date")
+@click.argument("end_date", required=False)
+@click.option(
+    "--log-level", default="INFO", help="Logging level (DEBUG, INFO, WARNING, ERROR)"
+)
+def upload(symbol: str, start_date: str, end_date: str | None, log_level: str):
+    """
+    Upload OHLCV data from Bybit to StarRocks.
+
+    SYMBOL: Trading pair symbol (e.g., BTCUSDT)
+
+    START_DATE: Start date in YYYY-MM-DD format
+
+    END_DATE: Optional end date in YYYY-MM-DD format (inclusive)
+
+    Examples:
+
+        flt upload BTCUSDT 2024-12-01
+
+        flt upload BTCUSDT 2024-11-01 2024-11-30
+    """
+    from flying_trading.starrocks_loader import (
+        get_starrocks_connection,
+        upload_date_range,
+        upload_to_starrocks,
+    )
+
+    setup_logging(log_level=log_level)
+
+    symbol = symbol.upper()
+
+    # Validate date format
+    try:
+        datetime.strptime(start_date, "%Y-%m-%d")
+        if end_date:
+            datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError as e:
+        click.echo(f"Error: Invalid date format. Expected YYYY-MM-DD: {e}", err=True)
+        raise SystemExit(1) from e
+
+    try:
+        connection = get_starrocks_connection()
+        click.echo("✓ Connected to StarRocks")
+
+        if end_date:
+            click.echo(f"Uploading {symbol} data from {start_date} to {end_date}...")
+            rows = upload_date_range(
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                connection=connection,
+            )
+        else:
+            click.echo(f"Uploading {symbol} data for {start_date}...")
+            rows = upload_to_starrocks(
+                symbol=symbol,
+                date=start_date,
+                connection=connection,
+            )
+
+        click.echo(f"✓ Successfully uploaded {rows} rows")
+
+    except Exception as e:
+        click.echo(f"✗ Error: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+        raise SystemExit(1) from e
+
+
+@cli.command()
+@click.argument("symbol")
+@click.option("--days", default=7, help="Number of days to backfill")
+@click.option(
+    "--log-level", default="INFO", help="Logging level (DEBUG, INFO, WARNING, ERROR)"
+)
+def backfill(symbol: str, days: int, log_level: str):
+    """
+    Backfill OHLCV data for the last N days.
+
+    SYMBOL: Trading pair symbol (e.g., BTCUSDT)
+
+    Example:
+
+        flt backfill BTCUSDT --days 30
+    """
+    from flying_trading.starrocks_loader import (
+        get_starrocks_connection,
+        upload_date_range,
+    )
+
+    setup_logging(log_level=log_level)
+
+    symbol = symbol.upper()
+    end_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+    try:
+        connection = get_starrocks_connection()
+        click.echo("✓ Connected to StarRocks")
+        click.echo(f"Backfilling {symbol} data from {start_date} to {end_date}...")
+
+        rows = upload_date_range(
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            connection=connection,
+        )
+
+        click.echo(f"✓ Successfully uploaded {rows} rows")
+
+    except Exception as e:
+        click.echo(f"✗ Error: {e}", err=True)
+        import traceback
+        traceback.print_exc()
+        raise SystemExit(1) from e
 
 
 if __name__ == "__main__":

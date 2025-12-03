@@ -6,6 +6,13 @@ class Config(BaseSettings):
 
     clickhouse_url: str
 
+    # StarRocks connection settings
+    starrocks_host: str = "localhost"
+    starrocks_port: int = 9030
+    starrocks_user: str = "root"
+    starrocks_password: str = ""
+    starrocks_database: str = "dbt"
+
     bybit_api_key: str
     bybit_api_secret: str
     bybit_testnet: bool = True
