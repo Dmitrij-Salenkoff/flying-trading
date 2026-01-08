@@ -1,0 +1,39 @@
+{
+    "stake_amount": 400,
+    "trading_mode": "futures",
+    "margin_mode": "isolated",
+    "exchange": {
+        "name": "bybit",
+        "pair_whitelist": [
+            "BTC/USDT:USDT",
+            "ETH/USDT:USDT",
+            "SOL/USDT:USDT",
+            "1000PEPE/USDT:USDT",
+            "XRP/USDT:USDT",
+            "DOGE/USDT:USDT"
+        ]
+    },
+    "stake_currency": "USDT",
+    "dry_run": true,
+    "max_open_trades": 20,
+    "pairlists": [
+        {
+            "method": "StaticPairList"
+        }
+    ],
+    "entry_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1
+    }
+}

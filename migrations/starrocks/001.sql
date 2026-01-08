@@ -1,39 +1,36 @@
--- Migration: Recreate bybit_ohlcv_1m with PRIMARY KEY for automatic deduplication
--- 
--- IMPORTANT: This will DROP the existing table with all data!
--- Run this only if you want to start fresh or backup data first.
+CREATE TABLE queue_trades (
+    event_time String,
+    symbol String,
+    price Float64,
+    quantity Float64,
+    trade_id UInt64,
+    is_buyer_maker Bool
+) ENGINE = Kafka
+SETTINGS kafka_broker_list = 'redpanda:9092',
+       kafka_topic_list = 'crypto_trades',
+       kafka_group_name = 'ch_consumer_group',
+       kafka_format = 'JSONEachRow';
 
--- Step 1: Drop old table
-DROP TABLE IF EXISTS bybit_ohlcv_1m;
 
--- Step 2: Create new table with PRIMARY KEY (auto-dedup on insert)
-CREATE TABLE IF NOT EXISTS bybit_ohlcv_1m (
-    -- Primary Key columns
-    symbol VARCHAR(32) NOT NULL COMMENT "Trading pair, e.g. BTCUSDT",
-    event_time DATETIME NOT NULL COMMENT "Candle start time",
-    
-    -- Value columns (will be updated on duplicate key)
-    open_price DECIMAL(38, 10) COMMENT "Open price",
-    high_price DECIMAL(38, 10) COMMENT "High price",
-    low_price DECIMAL(38, 10) COMMENT "Low price",
-    close_price DECIMAL(38, 10) COMMENT "Close price",
-    volume DECIMAL(38, 10) COMMENT "Volume in base currency (BTC)",
-    turnover DECIMAL(38, 10) COMMENT "Turnover in quote currency (USDT)"
-)
-ENGINE=OLAP
-PRIMARY KEY(symbol, event_time)
-PARTITION BY RANGE(event_time) (
-    PARTITION p202001 VALUES LESS THAN ("2020-02-01"),
-)
-DISTRIBUTED BY HASH(symbol) BUCKETS 10 
-PROPERTIES (
-    "replication_num" = "1",
-    
-    "dynamic_partition.enable" = "true",
-    "dynamic_partition.time_unit" = "MONTH",
-    "dynamic_partition.start" = "-48",
-    "dynamic_partition.end" = "6",
-    "dynamic_partition.prefix" = "p",
-    "dynamic_partition.buckets" = "10"
-);
+CREATE TABLE trades (
+    ts DateTime64(3),
+    symbol LowCardinality(String),
+    price Float64,
+    quantity Float64,
+    trade_id UInt64,
+    side Enum8('buy'=1, 'sell'=-1),
+    ingested_at DateTime64(3)
+) ENGINE = MergeTree()
+ORDER BY (symbol, ts);
 
+
+CREATE MATERIALIZED VIEW mv_trades TO trades AS
+SELECT
+    parseDateTime64BestEffort(event_time, 3) AS ts,
+    symbol,
+    price,
+    quantity,
+    trade_id,
+    if(is_buyer_maker, 'sell', 'buy') AS side,
+    now64(3) as ingested_at
+FROM queue_trades;

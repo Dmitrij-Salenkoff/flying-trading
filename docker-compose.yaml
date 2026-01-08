@@ -1,0 +1,74 @@
+version: '3.7'
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    command:
+      - redpanda start
+      - --smp 1 # Ограничиваем использование ядер (для локальной разработки)
+      - --memory 1G # Ограничиваем память
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+      # Настройка слушателей: 
+      # Внутренний (для Console внутри докера): 9092
+      # Внешний (для твоего Python скрипта): 19092
+      - --kafka-addr INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092
+      - --advertise-kafka-addr INTERNAL://redpanda:9092,EXTERNAL://localhost:19092
+      - --pandaproxy-addr INTERNAL://0.0.0.0:8082,EXTERNAL://0.0.0.0:19082
+      - --advertise-pandaproxy-addr INTERNAL://redpanda:8082,EXTERNAL://localhost:19082
+    ports:
+      - 19092:19092 # Порт для Python скрипта
+      - 9644:9644 # Admin API
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda_console
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yaml && /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yaml
+      # Конфиг консоли: указываем, где лежит брокер (внутри сети докера это redpanda:9092)
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+    ports:
+      - 8080:8080 # Веб-интерфейс будет здесь
+    depends_on:
+      - redpanda
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123" # HTTP порт (для DBeaver/DataGrip/Браузера)
+      - "9000:9000" # Нативный порт
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      - CLICKHOUSE_PASSWORD=123
+    volumes:
+      - ch_data:/var/lib/clickhouse
+    depends_on:
+      - redpanda
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - clickhouse
+
+volumes:
+  redpanda_data:
+  ch_data:
