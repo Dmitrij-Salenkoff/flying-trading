@@ -17,3 +17,10 @@ logs/
 
 .pytest_cache/
 .ruff_cache/
+
+private_keys.json
+*.sqlite*
+
+user_data/data
+user_data/hyperopt_results
+user_data/backtest_results
